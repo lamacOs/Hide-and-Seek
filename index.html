@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hide and Seek Middelsfähr</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background: #0f172a;
+    color: white;
+    text-align: center;
+    padding: 20px;
+}
+.container { max-width: 600px; margin: auto; }
+input, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: none; }
+button { background: #22c55e; font-weight: bold; cursor: pointer; }
+.member { background: #1e293b; padding: 10px; margin: 5px 0; border-radius: 8px; }
+.hidden { display: none; }
+.warning { color: red; }
+a { color: #38bdf8; text-decoration: none; }
+</style>
+</head>
+<body>
+
+<div class="container">
+<h1>Hide and Seek Middelsfähr</h1>
+
+<div id="codeBox">
+    <input type="password" id="accessCode" placeholder="Zugangscode eingeben">
+    <button onclick="checkCode()">Zugang prüfen</button>
+</div>
+
+<div id="formBox" class="hidden">
+<h2>Anmeldung</h2>
+<input type="text" id="firstname" placeholder="Vorname">
+<input type="text" id="lastname" placeholder="Nachname">
+<input type="number" id="age" placeholder="Alter">
+<input type="text" id="class" placeholder="Klasse">
+
+<h3>Nimmt mit:</h3>
+<label><input type="checkbox" value="Taschenlampe"> Taschenlampe</label><br>
+<label><input type="checkbox" value="Kompass"> Kompass</label><br>
+<label><input type="checkbox" value="Fahrzeuge"> Fahrrad/Inliner/Rollschuhe/Skateboard/Hoverboard/Roller/Kettcar</label><br>
+<label><input type="checkbox" value="Karte von Middelsfähr"> Karte von Middelsfähr</label>
+
+<p class="warning">!!! ANDERE SACHEN SIND NICHT ERLAUBT !!!</p>
+
+<label><input type="checkbox" id="agbCheck"> Ich habe die <a href="#" onclick="showAGB()">AGB‘s</a> gelesen</label><br>
+<label><input type="checkbox" id="rulesCheck"> Ich bin mit den <a href="#" onclick="showRules()">Spielregeln</a> einverstanden</label><br><br>
+<button onclick="register()">Anmelden</button>
+</div>
+
+<h2>Teilnehmer (<span id="count">0</span>)</h2>
+<input type="text" id="search" placeholder="Nach Namen suchen">
+<div id="members"></div>
+</div>
+
+<!-- Firebase v9 -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
+import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+
+// 🔥 DEINE FIREBASE CONFIG
+const firebaseConfig = {
+    apiKey: "AIzaSyA5dYM02tcTl7uDvX1WgyWqpihCWvfeIHs",
+    authDomain: "hide-and-seek-d8104.firebaseapp.com",
+    databaseURL: "https://hide-and-seek-d8104-default-rtdb.firebaseio.com",
+    projectId: "hide-and-seek-d8104",
+    storageBucket: "hide-and-seek-d8104.firebasestorage.app",
+    messagingSenderId: "967191587097",
+    appId: "1:967191587097:web:19765825deb306ab2dbd88"
+};
+
+const app = initializeApp(firebaseConfig);
+const database = getDatabase(app);
+const ACCESS_CODE = "HideAndSeekMiddelsfähr_26419";
+
+window.checkCode = function() {
+    const code = document.getElementById("accessCode").value;
+    if(code === ACCESS_CODE){
+        document.getElementById("codeBox").style.display = "none";
+        document.getElementById("formBox").classList.remove("hidden");
+    } else { alert("Falscher Code!"); }
+}
+
+window.register = function() {
+    if(!document.getElementById("agbCheck").checked || !document.getElementById("rulesCheck").checked){
+        alert("Bitte AGB und Regeln akzeptieren!");
+        return;
+    }
+    const firstname = document.getElementById("firstname").value;
+    const lastname = document.getElementById("lastname").value;
+    const age = document.getElementById("age").value;
+    const className = document.getElementById("class").value;
+
+    if(!firstname || !lastname || !age || !className){
+        alert("Bitte alle Felder ausfüllen!");
+        return;
+    }
+
+    const checkedBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
+    let items = [];
+    checkedBoxes.forEach(cb => { if(cb.value) items.push(cb.value); });
+
+    push(ref(database, "participants"), { firstname, lastname, age, class: className, items });
+    alert("Erfolgreich angemeldet!");
+}
+
+onValue(ref(database, "participants"), snapshot => {
+    const membersDiv = document.getElementById("members");
+    membersDiv.innerHTML = "";
+    let count = 0;
+    snapshot.forEach(child => {
+        const data = child.val();
+        count++;
+        const div = document.createElement("div");
+        div.className = "member";
+        div.innerText = data.firstname + " " + data.lastname + " | Klasse: " + data.class;
+        membersDiv.appendChild(div);
+    });
+    document.getElementById("count").innerText = count;
+});
+
+document.getElementById("search").addEventListener("input", function() {
+    const filter = this.value.toLowerCase();
+    const members = document.querySelectorAll(".member");
+    members.forEach(member => { member.style.display = member.innerText.toLowerCase().includes(filter) ? "block" : "none"; });
+});
+
+window.showAGB = function(){
+    alert(`Für Diebstahl oder Verletzungen übernehmen wir keine Haftung.
+Das Betreten privater Grundstücke ist strengstens untersagt.
+Während des Spiels bitte nur nach Abmeldung bei einem der Organisatoren
+(Tomte / Oscar Lachmund oslamu@mail.de)
+und nur wegen wichtiger Dinge gehen.`);
+}
+
+window.showRules = function(){
+    alert(`Es gibt 2 Teams (Sucher und Verstecker, jeweils 2 Klassen).
+Das Sucherteam muss alle Verstecker finden (nicht ticken),
+damit die Teams getauscht werden.
+In den Teams gibt es kleinere Teams (1-4 Leute),
+die gemeinsam suchen oder sich gemeinsam verstecken müssen.
+Fläche ist ganz Middelsfähr, das Verlassen ist verboten.
+Bei Fragen: lamacos.youtube@web.de`);
+}
+</script>
+
+</body>
+</html>
