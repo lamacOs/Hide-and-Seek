@@ -95,7 +95,7 @@ window.register = function() {
         return;
     }
 
-    // Nur Items aus "Nimmt mit"-Checkboxen
+    // ✅ Nur Items aus "Nimmt mit"-Checkboxen
     const checkedBoxes = document.querySelectorAll('#formBox input[type="checkbox"]:not(#agbCheck):not(#rulesCheck):checked');
     let items = [];
     checkedBoxes.forEach(cb => { if(cb.value) items.push(cb.value); });
