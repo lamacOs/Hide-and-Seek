@@ -5,13 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Hide and Seek Middelsfähr</title>
 <style>
-body {
-    font-family: Arial, sans-serif;
-    background: #0f172a;
-    color: white;
-    text-align: center;
-    padding: 20px;
-}
+body { font-family: Arial, sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
 .container { max-width: 600px; margin: auto; }
 input, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: none; }
 button { background: #22c55e; font-weight: bold; cursor: pointer; }
@@ -56,12 +50,11 @@ a { color: #38bdf8; text-decoration: none; }
 <div id="members"></div>
 </div>
 
-<!-- Firebase v9 -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
 import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
 
-// 🔥 DEINE FIREBASE CONFIG
+// 🔥 Deine Firebase Config
 const firebaseConfig = {
     apiKey: "AIzaSyA5dYM02tcTl7uDvX1WgyWqpihCWvfeIHs",
     authDomain: "hide-and-seek-d8104.firebaseapp.com",
@@ -76,6 +69,7 @@ const app = initializeApp(firebaseConfig);
 const database = getDatabase(app);
 const ACCESS_CODE = "HideAndSeekMiddelsfähr_26419";
 
+// Zugangscode prüfen
 window.checkCode = function() {
     const code = document.getElementById("accessCode").value;
     if(code === ACCESS_CODE){
@@ -84,29 +78,34 @@ window.checkCode = function() {
     } else { alert("Falscher Code!"); }
 }
 
+// Anmeldung
 window.register = function() {
     if(!document.getElementById("agbCheck").checked || !document.getElementById("rulesCheck").checked){
         alert("Bitte AGB und Regeln akzeptieren!");
         return;
     }
-    const firstname = document.getElementById("firstname").value;
-    const lastname = document.getElementById("lastname").value;
-    const age = document.getElementById("age").value;
-    const className = document.getElementById("class").value;
+
+    const firstname = document.getElementById("firstname").value.trim();
+    const lastname = document.getElementById("lastname").value.trim();
+    const age = document.getElementById("age").value.trim();
+    const className = document.getElementById("class").value.trim();
 
     if(!firstname || !lastname || !age || !className){
         alert("Bitte alle Felder ausfüllen!");
         return;
     }
 
-    const checkedBoxes = document.querySelectorAll('input[type="checkbox"]:checked');
+    // Nur Items aus "Nimmt mit"-Checkboxen
+    const checkedBoxes = document.querySelectorAll('#formBox input[type="checkbox"]:not(#agbCheck):not(#rulesCheck):checked');
     let items = [];
     checkedBoxes.forEach(cb => { if(cb.value) items.push(cb.value); });
 
-    push(ref(database, "participants"), { firstname, lastname, age, class: className, items });
-    alert("Erfolgreich angemeldet!");
+    push(ref(database, "participants"), { firstname, lastname, age, class: className, items })
+    .then(() => { alert("Erfolgreich angemeldet!"); })
+    .catch(err => { console.error(err); alert("Fehler beim Speichern!"); });
 }
 
+// Teilnehmer live anzeigen
 onValue(ref(database, "participants"), snapshot => {
     const membersDiv = document.getElementById("members");
     membersDiv.innerHTML = "";
@@ -116,35 +115,30 @@ onValue(ref(database, "participants"), snapshot => {
         count++;
         const div = document.createElement("div");
         div.className = "member";
-        div.innerText = data.firstname + " " + data.lastname + " | Klasse: " + data.class;
+        div.innerText = `${data.firstname} ${data.lastname} | Klasse: ${data.class}`;
         membersDiv.appendChild(div);
     });
     document.getElementById("count").innerText = count;
 });
 
+// Suchleiste
 document.getElementById("search").addEventListener("input", function() {
     const filter = this.value.toLowerCase();
-    const members = document.querySelectorAll(".member");
-    members.forEach(member => { member.style.display = member.innerText.toLowerCase().includes(filter) ? "block" : "none"; });
+    document.querySelectorAll(".member").forEach(member => {
+        member.style.display = member.innerText.toLowerCase().includes(filter) ? "block" : "none";
+    });
 });
 
-window.showAGB = function(){
-    alert(`Für Diebstahl oder Verletzungen übernehmen wir keine Haftung.
-Das Betreten privater Grundstücke ist strengstens untersagt.
-Während des Spiels bitte nur nach Abmeldung bei einem der Organisatoren
-(Tomte / Oscar Lachmund oslamu@mail.de)
-und nur wegen wichtiger Dinge gehen.`);
-}
+// AGB & Regeln
+window.showAGB = function(){ alert(`Für Diebstahl oder Verletzungen übernehmen wir keine Haftung.
+Betreten privater Grundstücke strengstens verboten.
+Während des Spiels nur nach Abmeldung bei Tomte / Oscar Lachmund (oslamu@mail.de)`); }
 
-window.showRules = function(){
-    alert(`Es gibt 2 Teams (Sucher und Verstecker, jeweils 2 Klassen).
-Das Sucherteam muss alle Verstecker finden (nicht ticken),
-damit die Teams getauscht werden.
-In den Teams gibt es kleinere Teams (1-4 Leute),
-die gemeinsam suchen oder sich gemeinsam verstecken müssen.
-Fläche ist ganz Middelsfähr, das Verlassen ist verboten.
-Bei Fragen: lamacos.youtube@web.de`);
-}
+window.showRules = function(){ alert(`2 Teams (Sucher & Verstecker), jeweils 2 Klassen.
+Kleine Teams 1-4 Personen bleiben zusammen.
+Teams tauschen, wenn alle gefunden sind.
+Fläche Middelsfähr nicht verlassen.
+Fragen: lamacos.youtube@web.de`); }
 </script>
 
 </body>
