@@ -1,144 +1,75 @@
 <!DOCTYPE html>
-<html lang="de">
+<html>
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hide and Seek Middelsfähr</title>
+<title>Hide and Seek</title>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-database.js"></script>
 <style>
-body { font-family: Arial, sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-.container { max-width: 600px; margin: auto; }
-input, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: none; }
-button { background: #22c55e; font-weight: bold; cursor: pointer; }
-.member { background: #1e293b; padding: 10px; margin: 5px 0; border-radius: 8px; }
-.hidden { display: none; }
-.warning { color: red; }
-a { color: #38bdf8; text-decoration: none; }
+body { font-family: Arial; background:#0f172a; color:white; text-align:center; padding:20px;}
+input,button{padding:10px;margin:5px;border-radius:8px;border:none;}
+button{background:#22c55e;font-weight:bold;}
+.member{background:#1e293b;padding:10px;margin:5px;border-radius:8px;}
 </style>
 </head>
 <body>
 
-<div class="container">
-<h1>Hide and Seek Middelsfähr</h1>
+<h1>Hide and Seek</h1>
 
-<div id="codeBox">
-    <input type="password" id="accessCode" placeholder="Zugangscode eingeben">
-    <button onclick="checkCode()">Zugang prüfen</button>
-</div>
-
-<div id="formBox" class="hidden">
-<h2>Anmeldung</h2>
-<input type="text" id="firstname" placeholder="Vorname">
-<input type="text" id="lastname" placeholder="Nachname">
-<input type="number" id="age" placeholder="Alter">
-<input type="text" id="class" placeholder="Klasse">
-
-<h3>Nimmt mit:</h3>
-<label><input type="checkbox" value="Taschenlampe"> Taschenlampe</label><br>
-<label><input type="checkbox" value="Kompass"> Kompass</label><br>
-<label><input type="checkbox" value="Fahrzeuge"> Fahrrad/Inliner/Rollschuhe/Skateboard/Hoverboard/Roller/Kettcar</label><br>
-<label><input type="checkbox" value="Karte von Middelsfähr"> Karte von Middelsfähr</label>
-
-<p class="warning">!!! ANDERE SACHEN SIND NICHT ERLAUBT !!!</p>
-
-<label><input type="checkbox" id="agbCheck"> Ich habe die <a href="#" onclick="showAGB()">AGB‘s</a> gelesen</label><br>
-<label><input type="checkbox" id="rulesCheck"> Ich bin mit den <a href="#" onclick="showRules()">Spielregeln</a> einverstanden</label><br><br>
+<input id="firstname" placeholder="Vorname"><br>
+<input id="lastname" placeholder="Nachname"><br>
 <button onclick="register()">Anmelden</button>
-</div>
 
-<h2>Teilnehmer (<span id="count">0</span>)</h2>
-<input type="text" id="search" placeholder="Nach Namen suchen">
+<h2>Teilnehmer</h2>
 <div id="members"></div>
-</div>
 
-<script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
+<script>
 
-// 🔥 Deine Firebase Config
-const firebaseConfig = {
-    apiKey: "AIzaSyA5dYM02tcTl7uDvX1WgyWqpihCWvfeIHs",
-    authDomain: "hide-and-seek-d8104.firebaseapp.com",
-    databaseURL: "https://hide-and-seek-d8104-default-rtdb.firebaseio.com",
-    projectId: "hide-and-seek-d8104",
-    storageBucket: "hide-and-seek-d8104.firebasestorage.app",
-    messagingSenderId: "967191587097",
-    appId: "1:967191587097:web:19765825deb306ab2dbd88"
+// Firebase Config
+var firebaseConfig = {
+  apiKey: "AIzaSyA5dYM02tcTl7uDvX1WgyWqpihCWvfeIHs",
+  authDomain: "hide-and-seek-d8104.firebaseapp.com",
+  databaseURL: "https://hide-and-seek-d8104-default-rtdb.firebaseio.com",
+  projectId: "hide-and-seek-d8104",
+  storageBucket: "hide-and-seek-d8104.firebasestorage.app",
+  messagingSenderId: "967191587097",
+  appId: "1:967191587097:web:19765825deb306ab2dbd88"
 };
 
-const app = initializeApp(firebaseConfig);
-const database = getDatabase(app);
-const ACCESS_CODE = "HideAndSeekMiddelsfähr_26419";
+firebase.initializeApp(firebaseConfig);
+var database = firebase.database();
 
-// Zugangscode prüfen
-window.checkCode = function() {
-    const code = document.getElementById("accessCode").value;
-    if(code === ACCESS_CODE){
-        document.getElementById("codeBox").style.display = "none";
-        document.getElementById("formBox").classList.remove("hidden");
-    } else { alert("Falscher Code!"); }
+function register() {
+  var firstname = document.getElementById("firstname").value;
+  var lastname = document.getElementById("lastname").value;
+
+  if(!firstname || !lastname){
+    alert("Bitte alles ausfüllen");
+    return;
+  }
+
+  database.ref("participants").push({
+    firstname: firstname,
+    lastname: lastname
+  });
+
+  alert("Gespeichert!");
 }
 
-// Anmeldung
-window.register = function() {
-    if(!document.getElementById("agbCheck").checked || !document.getElementById("rulesCheck").checked){
-        alert("Bitte AGB und Regeln akzeptieren!");
-        return;
-    }
+// Live Anzeige
+database.ref("participants").on("value", function(snapshot){
+  var membersDiv = document.getElementById("members");
+  membersDiv.innerHTML = "";
 
-    const firstname = document.getElementById("firstname").value.trim();
-    const lastname = document.getElementById("lastname").value.trim();
-    const age = document.getElementById("age").value.trim();
-    const className = document.getElementById("class").value.trim();
-
-    if(!firstname || !lastname || !age || !className){
-        alert("Bitte alle Felder ausfüllen!");
-        return;
-    }
-
-    // ✅ Nur Items aus "Nimmt mit"-Checkboxen
-    const checkedBoxes = document.querySelectorAll('#formBox input[type="checkbox"]:not(#agbCheck):not(#rulesCheck):checked');
-    let items = [];
-    checkedBoxes.forEach(cb => { if(cb.value) items.push(cb.value); });
-
-    push(ref(database, "participants"), { firstname, lastname, age, class: className, items })
-    .then(() => { alert("Erfolgreich angemeldet!"); })
-    .catch(err => { console.error(err); alert("Fehler beim Speichern!"); });
-}
-
-// Teilnehmer live anzeigen
-onValue(ref(database, "participants"), snapshot => {
-    const membersDiv = document.getElementById("members");
-    membersDiv.innerHTML = "";
-    let count = 0;
-    snapshot.forEach(child => {
-        const data = child.val();
-        count++;
-        const div = document.createElement("div");
-        div.className = "member";
-        div.innerText = `${data.firstname} ${data.lastname} | Klasse: ${data.class}`;
-        membersDiv.appendChild(div);
-    });
-    document.getElementById("count").innerText = count;
+  snapshot.forEach(function(child){
+    var data = child.val();
+    var div = document.createElement("div");
+    div.className = "member";
+    div.innerText = data.firstname + " " + data.lastname;
+    membersDiv.appendChild(div);
+  });
 });
 
-// Suchleiste
-document.getElementById("search").addEventListener("input", function() {
-    const filter = this.value.toLowerCase();
-    document.querySelectorAll(".member").forEach(member => {
-        member.style.display = member.innerText.toLowerCase().includes(filter) ? "block" : "none";
-    });
-});
-
-// AGB & Regeln
-window.showAGB = function(){ alert(`Für Diebstahl oder Verletzungen übernehmen wir keine Haftung.
-Betreten privater Grundstücke strengstens verboten.
-Während des Spiels nur nach Abmeldung bei Tomte / Oscar Lachmund (oslamu@mail.de)`); }
-
-window.showRules = function(){ alert(`2 Teams (Sucher & Verstecker), jeweils 2 Klassen.
-Kleine Teams 1-4 Personen bleiben zusammen.
-Teams tauschen, wenn alle gefunden sind.
-Fläche Middelsfähr nicht verlassen.
-Fragen: lamacos.youtube@web.de`); }
 </script>
 
 </body>
