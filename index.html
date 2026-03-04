@@ -1,230 +1,48 @@
 <!DOCTYPE html>
 <html lang="de">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Hide and Seek Middelsfähr</title>
-  <style>
-    body { font-family: Arial, sans-serif; background: #0f172a; color: white; text-align: center; padding: 20px; }
-    .container { max-width: 600px; margin: auto; }
-    input, button { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: none; box-sizing: border-box; }
-    button { background: #22c55e; font-weight: bold; cursor: pointer; }
-    .member { background: #1e293b; padding: 10px; margin: 5px 0; border-radius: 8px; }
-    .hidden { display: none; }
-    .warning { color: #ff6b6b; font-weight: bold; }
-    a { color: #38bdf8; text-decoration: none; }
-    .status { margin: 10px 0; padding: 10px; border-radius: 8px; background: #111827; text-align: left; white-space: pre-wrap; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
-  </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hide and Seek Middelsfähr</title>
+  <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
 <div class="container">
-  <h1>Hide and Seek Middelsfähr</h1>
+  <h1>Hide and Seek Middelsfähr</h1>
 
-  <div id="status" class="status">Status: lade…</div>
+  <div id="status" class="status">Status: lade…</div>
 
-  <div id="codeBox">
-    <input type="password" id="accessCode" placeholder="Zugangscode eingeben" />
-    <button id="btnCheck" type="button">Zugang prüfen</button>
-  </div>
+  <div id="codeBox">
+    <input type="password" id="accessCode" placeholder="Zugangscode eingeben" />
+    <button id="btnCheck" type="button">Zugang prüfen</button>
+  </div>
 
-  <div id="formBox" class="hidden">
-    <h2>Anmeldung</h2>
-    <input type="text" id="firstname" placeholder="Vorname" />
-    <input type="text" id="lastname" placeholder="Nachname" />
-    <input type="number" id="age" placeholder="Alter" />
-    <input type="text" id="classInput" placeholder="Klasse" />
+  <div id="formBox" class="hidden">
+    <h2>Anmeldung</h2>
+    <input type="text" id="firstname" placeholder="Vorname" />
+    <input type="text" id="lastname" placeholder="Nachname" />
+    <input type="number" id="age" placeholder="Alter" />
+    <input type="text" id="classInput" placeholder="Klasse" />
 
-    <h3>Nimmt mit:</h3>
-    <label><input type="checkbox" class="itemBox" value="Taschenlampe" /> Taschenlampe</label><br />
-    <label><input type="checkbox" class="itemBox" value="Kompass" /> Kompass</label><br />
-    <label><input type="checkbox" class="itemBox" value="Fahrzeuge" /> Fahrrad/Inliner/Rollschuhe/Skateboard/Hoverboard/Roller/Kettcar</label><br />
-    <label><input type="checkbox" class="itemBox" value="Karte von Middelsfähr" /> Karte von Middelsfähr</label>
+    <h3>Nimmt mit:</h3>
+    <label><input type="checkbox" class="itemBox" value="Taschenlampe" /> Taschenlampe</label><br />
+    <label><input type="checkbox" class="itemBox" value="Kompass" /> Kompass</label><br />
+    <label><input type="checkbox" class="itemBox" value="Fahrzeuge" /> Fahrrad/Inliner/Rollschuhe/Skateboard/Hoverboard/Roller/Kettcar</label><br />
+    <label><input type="checkbox" class="itemBox" value="Karte von Middelsfähr" /> Karte von Middelsfähr</label>
 
-    <p class="warning">!!! ANDERE SACHEN SIND NICHT ERLAUBT !!!</p>
+    <p class="warning">!!! ANDERE SACHEN SIND NICHT ERLAUBT !!!</p>
 
-    <label><input type="checkbox" id="agbCheck" /> Ich habe die <a href="#" id="linkAgb">AGB‘s</a> gelesen</label><br />
-    <label><input type="checkbox" id="rulesCheck" /> Ich bin mit den <a href="#" id="linkRules">Spielregeln</a> einverstanden</label><br /><br />
-    <button id="btnRegister" type="button">Anmelden</button>
-  </div>
+    <label><input type="checkbox" id="agbCheck" /> Ich habe die AGB‘s gelesen</label><br />
+    <label><input type="checkbox" id="rulesCheck" /> Ich bin mit den Spielregeln einverstanden</label><br /><br />
+    <button id="btnRegister" type="button">Anmelden</button>
+  </div>
 
-  <h2>Teilnehmer (<span id="count">0</span>)</h2>
-  <input type="text" id="search" placeholder="Nach Namen suchen" />
-  <div id="members"></div>
+  <h2>Teilnehmer (<span id="count">0</span>)</h2>
+  <input type="text" id="search" placeholder="Nach Namen suchen" />
+  <div id="members"></div>
 </div>
 
-<script type="module">
-  // --- Mini Logger direkt ins UI ---
-  const statusEl = document.getElementById("status");
-  const log = (...args) => {
-    const msg = args.map(a => typeof a === "string" ? a : JSON.stringify(a, null, 2)).join(" ");
-    statusEl.textContent = `Status: ${msg}`;
-    console.log(...args);
-  };
-
-  try {
-    log("Starte JS / lade Firebase…");
-
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-app.js";
-    import { getDatabase, ref, push, onValue } from "https://www.gstatic.com/firebasejs/9.22.2/firebase-database.js";
-
-    // Firebase Config
-    const firebaseConfig = {
-      apiKey: "AIzaSyA5dYM02tcTl7uDvX1WgyWqpihCWvfeIHs",
-      authDomain: "hide-and-seek-d8104.firebaseapp.com",
-      databaseURL: "https://hide-and-seek-d8104-default-rtdb.firebaseio.com",
-      projectId: "hide-and-seek-d8104",
-      storageBucket: "hide-and-seek-d8104.firebasestorage.app",
-      messagingSenderId: "967191587097",
-      appId: "1:967191587097:web:19765825deb306ab2dbd88"
-    };
-
-    const ACCESS_CODE = "HideAndSeekMiddelsfähr_26419";
-    const LS_KEY = "hs_participants_v1";
-
-    const app = initializeApp(firebaseConfig);
-    const database = getDatabase(app);
-    log("Firebase init OK.");
-
-    // --- Elemente ---
-    const codeBox = document.getElementById("codeBox");
-    const formBox = document.getElementById("formBox");
-
-    const btnCheck = document.getElementById("btnCheck");
-    const btnRegister = document.getElementById("btnRegister");
-
-    const accessCodeInput = document.getElementById("accessCode");
-
-    const firstnameEl = document.getElementById("firstname");
-    const lastnameEl = document.getElementById("lastname");
-    const ageEl = document.getElementById("age");
-    const classEl = document.getElementById("classInput");
-
-    const agbCheck = document.getElementById("agbCheck");
-    const rulesCheck = document.getElementById("rulesCheck");
-
-    const membersDiv = document.getElementById("members");
-    const countEl = document.getElementById("count");
-
-    // --- AGB/Rules ---
-    document.getElementById("linkAgb").addEventListener("click", (e) => {
-      e.preventDefault();
-      alert(`Für Diebstahl oder Verletzungen übernehmen wir keine Haftung.
-Betreten privater Grundstücke strengstens verboten.
-Während des Spiels nur nach Abmeldung bei Tomte / Oscar Lachmund (oslamu@mail.de)`);
-    });
-
-    document.getElementById("linkRules").addEventListener("click", (e) => {
-      e.preventDefault();
-      alert(`2 Teams (Sucher & Verstecker), jeweils 2 Klassen.
-Kleine Teams 1-4 Personen bleiben zusammen.
-Teams tauschen, wenn alle gefunden sind.
-Fläche Middelsfähr nicht verlassen.
-Fragen: lamacos.youtube@web.de`);
-    });
-
-    // --- Zugangscode prüfen ---
-    btnCheck.addEventListener("click", () => {
-      const code = accessCodeInput.value;
-      if (code === ACCESS_CODE) {
-        codeBox.style.display = "none";
-        formBox.classList.remove("hidden");
-        log("Code OK. Formular freigeschaltet.");
-      } else {
-        log("Falscher Code.");
-        alert("Falscher Code!");
-      }
-    });
-
-    // --- LocalStorage Backup ---
-    const saveLocal = (entry) => {
-      const arr = JSON.parse(localStorage.getItem(LS_KEY) || "[]");
-      arr.push({ ...entry, _savedAt: new Date().toISOString() });
-      localStorage.setItem(LS_KEY, JSON.stringify(arr));
-    };
-
-    // --- Anmeldung ---
-    btnRegister.addEventListener("click", async () => {
-      if (!agbCheck.checked || !rulesCheck.checked) {
-        alert("Bitte AGB und Regeln akzeptieren!");
-        return;
-      }
-
-      const firstname = firstnameEl.value.trim();
-      const lastname = lastnameEl.value.trim();
-      const age = ageEl.value.trim();
-      const className = classEl.value.trim();
-
-      if (!firstname || !lastname || !age || !className) {
-        alert("Bitte alle Felder ausfüllen!");
-        return;
-      }
-
-      const items = Array.from(document.querySelectorAll(".itemBox:checked")).map(cb => cb.value);
-
-      const payload = { firstname, lastname, age, class: className, items };
-
-      log("Speichere…", payload);
-
-      try {
-        // Firebase
-        await push(ref(database, "participants"), payload);
-
-        // LocalStorage Backup (optional)
-        saveLocal(payload);
-
-        log("Gespeichert ✅ (Firebase + LocalStorage)");
-        alert("Erfolgreich angemeldet!");
-
-        // optional: Felder resetten
-        firstnameEl.value = "";
-        lastnameEl.value = "";
-        ageEl.value = "";
-        classEl.value = "";
-        document.querySelectorAll(".itemBox").forEach(cb => cb.checked = false);
-        agbCheck.checked = false;
-        rulesCheck.checked = false;
-
-      } catch (err) {
-        console.error(err);
-        log(`Firebase-Fehler: ${err?.code || ""}\n${err?.message || err}`);
-        alert(`Fehler beim Speichern:\n${err?.code || ""}\n${err?.message || err}`);
-      }
-    });
-
-    // --- Live Teilnehmer anzeigen ---
-    onValue(ref(database, "participants"), (snapshot) => {
-      membersDiv.innerHTML = "";
-      let count = 0;
-
-      snapshot.forEach((child) => {
-        const data = child.val();
-        count++;
-
-        const div = document.createElement("div");
-        div.className = "member";
-        div.innerText = `${data.firstname} ${data.lastname} | Klasse: ${data.class}`;
-        membersDiv.appendChild(div);
-      });
-
-      countEl.innerText = count;
-      log(`Listener OK. Teilnehmer: ${count}`);
-    });
-
-    // --- Suche ---
-    document.getElementById("search").addEventListener("input", function () {
-      const filter = this.value.toLowerCase();
-      document.querySelectorAll(".member").forEach(member => {
-        member.style.display = member.innerText.toLowerCase().includes(filter) ? "block" : "none";
-      });
-    });
-
-  } catch (e) {
-    console.error(e);
-    const statusEl = document.getElementById("status");
-    statusEl.textContent = `Status: Script-Crash ganz am Anfang:\n${e?.message || e}`;
-  }
-</script>
-
+<script type="module" src="script.js"></script>
 </body>
 </html>
